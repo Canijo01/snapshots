@@ -1,5 +1,5 @@
 import configparser
-
+import time
 from  obtentoken import *
 from snapshots import *
 
@@ -17,6 +17,5 @@ token = get_token(APP_ID, SECRET, IYO_URL)
 jH = get_headers_js(token)
 oH = get_headers_os(token)
 
-print(snapshotcloudspaces(jH,URL))
-print(snapshotcloudspaces(jH,URL2))
-print(snapshotcloudspaces(jH,URL3))
+
+
