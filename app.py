@@ -12,19 +12,24 @@ URL = config.get("LOCATIONS", "URL")
 URL2 = config.get("LOCATIONS", "URL2")
 URL3 = config.get("LOCATIONS", "URL3")
 
+Intervalo = 470  #minutos
+multiplier = 5   #minutos
+time_range = int( Intervalo / multiplier)
+sleep_delay = int(60 * multiplier)
+print (sleep_delay)
 token = get_token(APP_ID, SECRET, IYO_URL)
 jH = get_headers_js(token)
 oH = get_headers_os(token)
 while True:
-    for i in range(470):
-        print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % (470 - i,URL))
-        time.sleep(60) # Delay for 1 minute (60 seconds).
+    for i in range(time_range):
+        print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL))
+        time.sleep(sleep_delay) # Delay for 1 minute (60 seconds).
     print(snapshotcloudspaces(jH,URL))
-    for i in range(470):
-        print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % (470 - i,URL2))
-        time.sleep(60) # Delay for 1 minute (60 seconds).
+    for i in range(time_range):
+        print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL2))
+        time.sleep(sleep_delay) # Delay for 1 minute (60 seconds).
     print(snapshotcloudspaces(jH,URL2))
-    for i in range(470):
-        print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % (470 - i,URL3))
+    for i in range(sleep_delay):
+        print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL3))
         time.sleep(60) # Delay for 1 minute (60 seconds).
     print(snapshotcloudspaces(jH,URL3))
