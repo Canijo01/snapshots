@@ -17,10 +17,11 @@ multiplier = 5   #minutos
 time_range = int( Intervalo / multiplier)
 sleep_delay = int(60 * multiplier)
 print (sleep_delay)
-token = get_token(APP_ID, SECRET, IYO_URL)
-jH = get_headers_js(token)
-oH = get_headers_os(token)
+
 while True:
+    token = get_token(APP_ID, SECRET, IYO_URL)
+    jH = get_headers_js(token)
+    oH = get_headers_os(token)
     for i in range(time_range):
         print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL))
         time.sleep(sleep_delay) # Delay for 1 minute (60 seconds).
