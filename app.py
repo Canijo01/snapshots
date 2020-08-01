@@ -12,7 +12,7 @@ URL = config.get("LOCATIONS", "URL")
 URL2 = config.get("LOCATIONS", "URL2")
 URL3 = config.get("LOCATIONS", "URL3")
 
-Intervalo = 470  #minutos
+Intervalo = 460  #minutos
 multiplier = 5   #minutos
 time_range = int( Intervalo / multiplier)
 sleep_delay = int(60 * multiplier)
