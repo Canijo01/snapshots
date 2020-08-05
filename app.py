@@ -1,12 +1,14 @@
 import configparser
+import os
 from  obtentoken import *
 from snapshots import *
 
 config = configparser.ConfigParser()
 a = config.read("config.ini")
 
-APP_ID = config.get("ACCESS", "APP_ID")
-SECRET = config.get("ACCESS", "Secret")
+APP_ID = os.environ['app-id']
+SECRET = os.environ['app-id-token']
+print ( "AppID %s, Secret %s"%(APP_ID, SECRET))
 IYO_URL = config.get("ACCESS", "IYO_URL")
 URL = config.get("LOCATIONS", "URL")
 URL2 = config.get("LOCATIONS", "URL2")
