@@ -1,22 +1,25 @@
 import configparser
+import os
 from  obtentoken import *
 from snapshots import *
 
 config = configparser.ConfigParser()
 a = config.read("config.ini")
 
-APP_ID = config.get("ACCESS", "APP_ID")
-SECRET = config.get("ACCESS", "Secret")
+APP_ID = os.environ['IYO']
+SECRET = os.environ['SECRET']
+#APP_ID = config.get("ACCESS", "APP_ID")
+#SECRET = config.get("ACCESS", "Secret")
 IYO_URL = config.get("ACCESS", "IYO_URL")
 URL = config.get("LOCATIONS", "URL")
 URL2 = config.get("LOCATIONS", "URL2")
 URL3 = config.get("LOCATIONS", "URL3")
 
-Intervalo = 470  #minutos
-multiplier = 5   #minutos
+Intervalo = 1  #minutos
+multiplier = 1   #minutos
 time_range = int( Intervalo / multiplier)
 sleep_delay = int(60 * multiplier)
-print (sleep_delay)
+#print (sleep_delay)
 
 while True:
     token = get_token(APP_ID, SECRET, IYO_URL)
@@ -32,5 +35,5 @@ while True:
     print(snapshotcloudspaces(jH,URL2))
     for i in range(sleep_delay):
         print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL3))
-        time.sleep(60) # Delay for 1 minute (60 seconds).
+        time.sleep(sleep_delay) # Delay for 1 minute (60 seconds).
     print(snapshotcloudspaces(jH,URL3))

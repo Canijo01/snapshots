@@ -12,6 +12,8 @@ def get_token(APP_ID, SECRET, IYO_URL):
         'client_secret': SECRET,
         'response_type': 'id_token'
     }
+    print (data)
+    print (IYO_URL)
     iyo_token = requests.post(IYO_URL, data=data)
 
     headers = {
