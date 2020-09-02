@@ -6,8 +6,8 @@ from snapshots import *
 config = configparser.ConfigParser()
 a = config.read("config.ini")
 
-APP_ID = os.environ['IYO']
-SECRET = os.environ['SECRET']
+APP_ID = os.environ['iyo-app']
+SECRET = os.environ['iyo-secret']
 #APP_ID = config.get("ACCESS", "APP_ID")
 #SECRET = config.get("ACCESS", "Secret")
 IYO_URL = config.get("ACCESS", "IYO_URL")
