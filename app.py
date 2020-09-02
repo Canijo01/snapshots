@@ -5,7 +5,8 @@ from snapshots import *
 
 config = configparser.ConfigParser()
 a = config.read("config.ini")
-
+for i in os.environ:
+    print (i,os.environ[i])
 APP_ID = os.environ['iyo-app']
 SECRET = os.environ['iyo-secret']
 #APP_ID = config.get("ACCESS", "APP_ID")
