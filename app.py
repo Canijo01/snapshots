@@ -9,10 +9,10 @@ a = config.read("config.ini")
 #    print (i,os.environ[i])
 if "APPID" in os.environ:
     APP_ID = os.environ['APPID']
-    print ("APP_ID:%s"%APP_ID)
+    print ("APP_ID:Ok")
 if "SECRET" in os.environ:
     SECRET = os.environ['SECRET']
-    print("SECRET:%s" % SECRET)
+    print("SECRET:Ok" )
 
 
 #APP_ID = config.get("ACCESS", "APP_ID")
@@ -22,8 +22,8 @@ URL = config.get("LOCATIONS", "URL")
 URL2 = config.get("LOCATIONS", "URL2")
 URL3 = config.get("LOCATIONS", "URL3")
 
-Intervalo = 1  #minutos
-multiplier = 1   #minutos
+Intervalo = 460  #minutos
+multiplier = 5   #minutos
 time_range = int( Intervalo / multiplier)
 sleep_delay = int(60 * multiplier)
 #print (sleep_delay)
