@@ -5,10 +5,16 @@ from snapshots import *
 
 config = configparser.ConfigParser()
 a = config.read("config.ini")
-for i in os.environ:
-    print (i,os.environ[i])
-APP_ID = os.environ['APPID']
-SECRET = os.environ['SECRET']
+#for i in os.environ:
+#    print (i,os.environ[i])
+if "APPID" in os.environ:
+    APP_ID = os.environ['APPID']
+    print ("APP_ID:%s"%APP_ID)
+if "SECRET" in os.environ:
+    SECRET = os.environ['SECRET']
+    print("SECRET:%s" % SECRET)
+
+
 #APP_ID = config.get("ACCESS", "APP_ID")
 #SECRET = config.get("ACCESS", "Secret")
 IYO_URL = config.get("ACCESS", "IYO_URL")
