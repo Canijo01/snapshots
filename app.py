@@ -40,7 +40,7 @@ while True:
         print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL2))
         time.sleep(sleep_delay) # Delay for 1 minute (60 seconds).
     print(snapshotcloudspaces(jH,URL2))
-    for i in range(sleep_delay):
+    for i in range(time_range):
         print("Dumiendo, en %s minutos despierto para hacer snaps en %s" % ((time_range -  i) * multiplier ,URL3))
         time.sleep(sleep_delay) # Delay for 1 minute (60 seconds).
     print(snapshotcloudspaces(jH,URL3))
