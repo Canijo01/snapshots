@@ -236,19 +236,43 @@ def clone_machine_from_disk_id(headers, URL,customer_id,cloudspace_id,location,d
 
     return(vm)
 
-def deploy_vm_from_image_id(headers, URL,customer_id,cloudspace_id,data):
-    print("Inicando creación de vm: %s desde image_id: %s"%(data["name"],data["image_id"]))
+async def deploy_vm_from_image_id(session,headers, URL,customer_id,cloudspace_id,data):
+    vm_data = data[0]
+    print("Inicando creación de vm: %s desde image_id: %s"%(vm_data["name"],vm_data["image_id"]))
     ## Se crea la vm usando el disco clonado que tiene el boot_disk_id
-    vm=vm_create(headers, URL, customer_id, cloudspace_id, data)
-    if vm.status_code == requests.codes.ok:
-        my_vms = vm.json()
-        vm_id= my_vms["vm_id"]
-        print("La vm : %s tiene un vm_id: %s"%(data["name"],vm_id))
-        #Una ves creada la VM se le anexan los las redes externas
-        for external_network_id in data["externalnetworks"]:
-             attach_external_nics_to_vm(
-                           headers, URL, customer_id, cloudspace_id,vm_id, external_network_id[0],external_network_id[1])
-    else:
-        print("creación vm %s fallo por:%s"%(data["name"],vm.text))
+    api_get = 'api/1/customers/%s/cloudspaces/%s/vms' % (customer_id, cloudspace_id)
+    #async with  session.post(URL + api_get, headers=headers, params=vm_data) as resp:
+    #    vm = await resp.json()
+    resp = await session.post(URL + api_get, headers=headers, params=vm_data,timeout=None)
+    vm = await resp.json()
+    if resp.status == requests.codes.ok:
+        vm_id=vm["vm_id"]
+        print(f'VM creada:{vm_data["name"]} correctamente ID:{vm_id}')
+        if data[1] :
+            tasks = []
+            for e_network in data[1]:
+                data = {
+                    'external_network_id': "%s" % (e_network[0]),
+                    'external_network_ip': "%s" % (e_network[1])
+                }
+                api_get = 'api/1/customers/%s/cloudspaces/%s/vms/%s/external-nics' % (customer_id, cloudspace_id, vm_id)
+             #   tasks.append(asyncio.ensure_future(session.post(URL + api_get, headers=headers, params=data)))
 
-    return(vm)
+            #    async with session.post(URL + api_get, headers=headers, params=data) as resp:
+            #       network_attached = await resp.json()
+                resp2 = await session.post(URL + api_get, headers=headers, params=data,timeout=None)
+                success = await resp2.json()
+            #results = await asyncio.gather(*tasks)
+            #for resp in results:
+                #print(resp)
+                if resp2.status == requests.codes.ok:
+                    print("External_network_id:%s conectada a vm_id:%s" % (e_network[0], vm_id))
+                else:
+                    print(
+                        "ADVERTENCIA: Conexion a External_network_Id: %s de vm_id:%s fallo. Mensaje: %s \n api_get %s\ndata:"
+                        % (e_network[0], vm_id, e_network[1], api_get), data)
+    else:
+        print("creación vm %s fallo por:%s" % (vm_data["name"], resp.text))
+    return (resp)
+
+

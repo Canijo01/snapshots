@@ -1,4 +1,6 @@
 import requests
+import asyncio
+import aiohttp
 
 def machinelist(headers,URL,cloudspaceId):
     data = {
@@ -38,117 +40,111 @@ def machines_stop(headers,URL,vm_id,force):
 ###
 ### New API
 ###
-
-def vm_stop(headers,URL,customer_id,cloudspace_id,vm_id,force):
+### Usamos aiohttp en vez de requests
+async def vm_stop(session, headers,URL,customer_id,cloudspace_id,vm_id,force):
     data = {
         'force': "%s" %(force)
     }
     api_get = 'api/1/customers/%s/cloudspaces/%s/vms/%s/stop' % (customer_id, cloudspace_id, vm_id)
     #print(api_get, data)
-    vm_stopped = requests.post(URL + api_get, headers=headers, params=data)
-    if vm_stopped.status_code == requests.codes.ok:
+    #vm_stopped =requests.post(URL + api_get, headers=headers, params=data)
+
+    async with session.post(URL + api_get, headers=headers, params=data) as resp:
+        vm_stopped = await resp.json()
+
+    if resp.status == requests.codes.ok:
         print("VM_id:%s detenida exitosamente"%(vm_id))
     else:
         print("Advertencia vm_id: %s no se pudo detener. Mensaje: %s \n api_get %s\n data:"
-              %(vm_id,vm_stopped.text,api_get),data)
+          %(vm_id,vm_stopped,api_get),data)
+    return (resp)
 
-    return (vm_stopped)
-def machine_delete(headers,URL,customer_id,cloudspace_id,vm_id,force):
+async def async_vm_get(session, headers,URL,customer_id,cloudspace_id,vm_id):
+    data = {
+            }
+    #print(f'API GET-->{vm_id}<---')
+    api_get = 'api/1/customers/%s/cloudspaces/%s/vms/%s' % (customer_id, cloudspace_id, vm_id)
+    async with session.get(URL + api_get, headers=headers) as resp:
+        vm_goted = await resp.json()
+    if resp.status == requests.codes.ok:
+        print("Se obtuvo la infor de VM_id:%s exitosamente\n"%(vm_id),vm_goted)
+    else:
+        print("Advertencia vm_id: %s no se pudo detener información. Mensaje: %s \n api_get %s\n data:"
+          %(vm_id,vm_goted,api_get),resp)
+    return (resp)
+
+def vm_get( headers,URL,customer_id,cloudspace_id,vm_id):
+    data = {
+            }
+    api_get = 'api/1/customers/%s/cloudspaces/%s/vms/%s' % (customer_id, cloudspace_id, vm_id)
+    print(f'API GET-->{ URL+ api_get}<---')
+#    https: // cloud.amx.gig.tech / api / 1 / customers / exfo_1 / cloudspaces / dXMtamFjLWRjMDEtMDAyOjEzMDI / vms / 3338
+    resp =  requests.get(URL + api_get, headers=headers)
+    vm_goted = resp.json()
+
+    if resp.status_code == requests.codes.ok:
+        print("Se obtuvo la infor de VM_id:%s exitosamente\n"%(vm_id),vm_goted)
+    else:
+        print("Advertencia vm_id: %s no se pudo detener información. Mensaje: %s \n api_get %s\n data:"
+          %(vm_id,vm_goted,api_get),resp)
+    return (resp)
+async def vm_delete(session,headers,URL,customer_id,cloudspace_id,vm_id,force):
     data = {
         'permanently': "%s" %(force)
     }
     api_get = 'api/1/customers/%s/cloudspaces/%s/vms/%s' % (customer_id, cloudspace_id, vm_id)
     #print(api_get, data)
-    vm_deleted = requests.delete(URL + api_get, headers=headers, params=data)
-    if vm_deleted.status_code == requests.codes.ok:
+    async with session.delete(URL + api_get, headers=headers, params=data) as resp:
+        vm_deleted = await resp.json()
+    if resp.status == requests.codes.ok:
         print("VM_id:%s borrada exitosamente"%(vm_id))
     else:
         print("--->vm_id: %s no se pudo borrar. Mensaje: %s \n api_get %s\n data:"
-              %(vm_id,vm_deleted.text,api_get),data)
+              %(vm_id,vm_deleted,api_get),data)
+    return (resp)
 
-    return (vm_deleted)
 def machine_list(headers,URL,customer_id,cloudspace_id):
     data = {
         'force': "%s" %(force)
     }
 
     api_get = 'api/1/customers/%s/cloudspaces/%s/vms' % (customer_id, cloudspace_id)
+
     print(api_get, data)
     vms_listed = requests.post(URL + api_get, headers=headers, params=data)
     if vm_listed.status_code == requests.codes.ok:
         print("Lista de vms para cloudspace_id:%s obtenida exitosamente" % (cloudspace_id))
     else:
         print("--->No se pudo obtener lista de vms para cloudspace_id: %s. Mensaje %s : %s \n api_get %s\n data:"
-              % (cloudspace_id, vms_listed.text, api_get), data)
+              % (cloudspace_id, vms_listed.json(), api_get), data)
     return (vms_list)
-#Model
-#{
-#    "result": [
-#        {
-#            "vm_id": 0,
-#            "name": "string",
-#            "status": "string",
-#            "stack_id": 0,
-#            "creation_time": 0,
-#            "update_time": 0,
-#            "reference_id": "string",
-#            "image_id": 0,
-#            "storage": 0,
-#            "vcpus": 0,
-#            "memory": 0,
-#            "appliance": true,
-#            "disks": [
-#                0
-#            ],
-#            "network_interfaces": [
-#                {
-#                    "device_name": "string",
-#                    "mac_address": "string",
-#                    "ip_address": "string",
-#                    "network_id": 0
-#                }
-#            ]
-#        }
-#    ]
-#}
-def vm_create(headers,URL,customer_id,cloudspace_id,data):
-    #data = {
-    #    'name': "%s" % (name),
-    #    'description': "%s" % (description),
-    #    'disk_size': "%s" % (disk_size),
-    #    'data_disks': "%s" % (data_disks)
-    #    'vcpus': "%s" % (vcpus),
-    ##    'memory': "%s" %(memory),
-    #    'private_ip': "%s" % (private_ip),
-    #    'image_id': "%s" % (image_id),
-    #    'os_type': "%s" % (os_type)
-    #}
 
+async def vm_create(session, headers,URL,customer_id,cloudspace_id,data):
     api_get = 'api/1/customers/%s/cloudspaces/%s/vms' % (customer_id, cloudspace_id)
-    #print(api_get, data)
-    vm_created = requests.post(URL + api_get, headers=headers, params=data)
-    if vm_created.status_code == requests.codes.ok:
-        print("VM creadas:%s correctamente"%(data["name"]))
+    async with  session.post(URL + api_get, headers=headers, params=data) as resp:
+        await resp.json()
+    if resp.status_code == requests.codes.ok:
+        print(f'VM creada:{data["name"]} correctamente')
     else:
-        print("--->Creacion de VM fallo. Mensaje %s fallo: %s \n api_get %s\ndata:"
-              %(data["name"],vm_created.text,api_get),data)
-    return (vm_created)
+        print("creación vm %s fallo por:%s" % (data["name"],resp.text))
+    return (resp)
 
 
-def attach_external_nics_to_vm(headers,URL,customer_id,cloudspace_id,vm_id,
+async def attach_external_nics_to_vm(session, headers,URL,customer_id,cloudspace_id,vm_id,
                                external_network_id,external_network_ip):
     data = {
         'external_network_id': "%s" % (external_network_id),
         'external_network_ip': "%s" % (external_network_ip)
     }
     api_get = 'api/1/customers/%s/cloudspaces/%s/vms/%s/external-nics' % (customer_id, cloudspace_id, vm_id)
-    success = requests.post(URL + api_get, headers=headers, params=data)
-    if success.status_code == requests.codes.ok:
-        print("External_network_id:%s conectada a vm_id:%s"%(external_network_id,vm_id))
-    else:
-        print("ADVERTENCIA: Conexion a External_network_Id: %s de vm_id:%s fallo. Mensaje: %s \n api_get %s\ndata:"
-              %(external_network_id,vm_id,success.text,api_get),data)
-    return (success)
+    async with session.post(URL + api_get, headers=headers, params=data) as resp:
+        network_attached = await resp.json()
+        if resp.status == requests.codes.ok:
+            print("External_network_id:%s conectada a vm_id:%s"%(external_network_id,vm_id))
+        else:
+            print("ADVERTENCIA: Conexion a External_network_Id: %s de vm_id:%s fallo. Mensaje: %s \n api_get %s\ndata:"
+                  %(external_network_id,vm_id,success.text,api_get),data)
+        return (resp)
 
 def vm_export_s3(headers,URL,customer_id,cloudspace_id,vm_id,
                                data):

@@ -1,4 +1,6 @@
 import requests
+import asyncio
+
 from machines import *
 def cloudspaceslist(headers,URL):
     data = {
@@ -47,54 +49,67 @@ def cloudspace_vms_get(headers, URL, customer_id,cloudspace_id):
     if cloudspace.status_code == requests.codes.ok:
         print("Se obtuvieron las vms para cloudspace_id:%s"%(cloudspace_id))
     else:
-        print("ERROR: NO se obtuvieron las vms para cloudspace_Id: %s. Mensaje %s: %s \n\t api_get %s\n\tdata:"
+        print("ERROR: NO se obtuvieron las vms para cloudspace_Id: %s. Mensaje: %s \n\t api_get %s\n\tdata:"
               %(cloudspace_id,cloudspace.text,api_get),data)
     return (cloudspace)
 
-def stop_vms_cloudspaces(headers, URL,customer_id,force):
+async def stop_vms_cloudspaces(headers, URL,customer_id,force):
     ids = []
     cloudspaces = cloudspaceslist2(headers, URL,customer_id)
 
     if cloudspaces.status_code == requests.codes.ok:
         my_cloudspaces = cloudspaces.json()
-
+        session = aiohttp.ClientSession()
         for i in my_cloudspaces["result"]:
             print("cloudspaceId: %s, location: %s, status:%s, name: %s" % (
             i["cloudspace_id"], i["location"], i["status"], i["name"]))
             vms = cloudspace_vms_get(headers, URL, customer_id,i["cloudspace_id"])
             if vms.status_code == requests.codes.ok:
                 my_vms = vms.json()
+                tasks = []
                 for vm in my_vms["result"]:
-                    stops=vm_stop(headers, URL, customer_id,i["cloudspace_id"],vm["vm_id"], force)
+                    #stops=vm_stop(headers, URL, customer_id,i["cloudspace_id"],vm["vm_id"], force)
+                    tasks.append(asyncio.ensure_future(vm_stop(session,headers, URL, customer_id,i["cloudspace_id"],vm["vm_id"], force)))
                     #print("vm_Id: %s, name:%s, stop status:%s" % (m["vm_id"], m["name"],stops))
-                    ids.append([v["vm_id"],stops])
+                    #ids.append([v["vm_id"],stops])
+                    await asyncio.gather(*tasks)
+        session.close()
     else: print("No se obtuvieron los cloudspaces de customer_id:%s mensaje:%s"%(customer_id,cloudspaces.text))
     return(ids)
-def stop_vms_cloudspace(headers, URL,customer_id,cloudspace_id,force):
+
+async def stop_vms_cloudspace(headers, URL,customer_id,cloudspace_id,force):
     ids = []
     vms = cloudspace_vms_get(headers, URL, customer_id,cloudspace_id)
     if vms.status_code == requests.codes.ok:
-        my_vms = vms.json()
-        if (my_vms["result"]):
-            for vm in my_vms["result"]:
-                stops=vm_stop(headers, URL, customer_id,cloudspace_id,vm["vm_id"],force)
-                #print("vm_Id: %s, name:%s, stop status:%s" % (m["vm_id"], m["name"],stops))
-                ids.append([vm["vm_id"],stops])
-        else:
-            print("No hay vms a detener en cloudspace_id:%s"%(cloudspace_id))
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            my_vms = vms.json()
+            if (my_vms["result"]):
+                for vm in my_vms["result"]:
+                    tasks.append(vm_stop(session,headers, URL, customer_id,cloudspace_id,vm["vm_id"],force))
+                    #print("vm_Id: %s, name:%s, stop status:%s" % (m["vm_id"], m["name"],stops))
+                results = await asyncio.gather(*tasks)
+                return(results)
+            else:
+                print("No hay vms a detener en cloudspace_id:%s"%(cloudspace_id))
+
     else:
         print("No se pudo obtener lista de vms para cloudspace_id: %s Mensaje:%s \n"%(cloudspace_id,vms.text))
     return(ids)
-def delete_vms_cloudspace(headers, URL,customer_id,cloudspace_id,force):
+async def delete_vms_cloudspace(headers, URL,customer_id,cloudspace_id,force):
     ids = []
-    machines = cloudspace_vms_get(headers, URL, customer_id,cloudspace_id)
-    if machines.status_code == requests.codes.ok:
-        my_machines = machines.json()
-        for m in my_machines["result"]:
-            stops=machine_delete(headers, URL, customer_id,cloudspace_id,m["vm_id"],force)
-            #print("vm_Id: %s, name:%s, delete status:%s" % (m["vm_id"], m["name"],stops))
-            #ids.append([m["vm_id"],stops])
-    else: print(cloudspaces.status_code)
+    vms = cloudspace_vms_get(headers, URL, customer_id,cloudspace_id)
+    if vms.status_code == requests.codes.ok:
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            my_vms = vms.json()
+            for vm in my_vms["result"]:
+                tasks.append(asyncio.ensure_future(
+                    vm_delete(session, headers, URL, customer_id, cloudspace_id, vm["vm_id"], force)))
+            results = await asyncio.gather(*tasks)
+            return (results)
+    else:
+        print("No se pudo obtener lista de vms para cloudspace_id: %s Mensaje:%s \n"%(cloudspace_id,vms.text))
     return(ids)
 
 
@@ -112,6 +127,21 @@ def get_consumption_cloudspace(headers, URL,customer_id,cloudspace_id,start,end)
         print("ERROR: NO se obtuvieron los datos de consumo del cloudspaceId: %s. Mensaje %s: \n\t api_get %s\n\tdata:"
               % (cloudspace_id, consumption.text, api_get), data)
     return (consumption)
+
+async def get_vms_cloudspace(headers, URL,customer_id,cloudspace_id):
+    vms = cloudspace_vms_get(headers, URL, customer_id, cloudspace_id)
+    if vms.status_code == requests.codes.ok:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=5)) as session:
+            tasks = []
+            my_vms = vms.json()
+            if (my_vms["result"]):
+                for vm in my_vms["result"]:
+                    tasks.append(async_vm_get(session, headers, URL, customer_id, cloudspace_id, vm["vm_id"]))
+                    # print("vm_Id: %s, name:%s, stop status:%s" % (m["vm_id"], m["name"],stops))
+                results = await asyncio.gather(*tasks)
+                return (results)
+            else:
+                print("No hay vms a detener en cloudspace_id:%s" % (cloudspace_id))
 
 def stop_vms_cloudspaces(headers, URL,customer_id,force):
     ids = []
